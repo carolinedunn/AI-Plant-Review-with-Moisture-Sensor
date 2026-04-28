@@ -287,55 +287,11 @@ export default function App() {
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Right Column: Diagnostics (Sidebar) */}
-        <aside className="flex flex-col gap-6">
-          {/* Health Score Card */}
-          <div className="glass-card">
-            <p className="text-[11px] uppercase tracking-[1.5px] text-text-dim mb-4">Vitality Score</p>
-            <div className="flex items-center gap-8">
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="48"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    fill="transparent"
-                    className="text-white/5"
-                  />
-                  <motion.circle
-                    cx="56"
-                    cy="56"
-                    r="48"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    fill="transparent"
-                    strokeDasharray={301.6}
-                    initial={{ strokeDashoffset: 301.6 }}
-                    animate={{ strokeDashoffset: 301.6 - (301.6 * (healthScore || 0)) / 100 }}
-                    className="text-accent-green"
-                  />
-                </svg>
-                <span className="absolute text-3xl font-light">{healthScore || '--'}</span>
-              </div>
-              <div className="space-y-1">
-                <p className={`text-lg font-medium ${healthScore && healthScore > 70 ? 'text-accent-green' : 'text-orange-400'}`}>
-                  {healthScore ? (healthScore > 80 ? 'Optimal Condition' : healthScore > 60 ? 'Stable Growth' : 'Attention Required') : 'Analysis Pending'}
-                </p>
-                <p className="text-xs text-text-dim leading-relaxed max-w-[200px]">
-                  Visual assessment of morphology, color balance, and leaf texture.
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Moisture Gauge Card */}
-          <div className="glass-card">
+          <div className="glass-card w-full">
             <div className="flex justify-between items-start mb-4">
-              <p className="text-[11px] uppercase tracking-[1.5px] text-text-dim">Substrate Moisture</p>
+              <p className="text-[11px] uppercase tracking-[1.5px] text-text-dim">Plant Moisture</p>
               <Droplets size={14} className={currentMoisture && currentMoisture < MOISTURE_THRESHOLDS.CRITICAL_LOW ? "text-red-400 animate-bounce" : "text-blue-400"} />
             </div>
             <div className="flex flex-col gap-4">
@@ -380,6 +336,50 @@ export default function App() {
                 <span>{MOISTURE_THRESHOLDS.OPTIMAL_MAX}%</span>
                 <span>Wet</span>
                 <span>100%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Right Column: Diagnostics (Sidebar) */}
+        <aside className="flex flex-col gap-6">
+          {/* Health Score Card */}
+          <div className="glass-card">
+            <p className="text-[11px] uppercase tracking-[1.5px] text-text-dim mb-4">Vitality Score</p>
+            <div className="flex items-center gap-8">
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="48"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="transparent"
+                    className="text-white/5"
+                  />
+                  <motion.circle
+                    cx="56"
+                    cy="56"
+                    r="48"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="transparent"
+                    strokeDasharray={301.6}
+                    initial={{ strokeDashoffset: 301.6 }}
+                    animate={{ strokeDashoffset: 301.6 - (301.6 * (healthScore || 0)) / 100 }}
+                    className="text-accent-green"
+                  />
+                </svg>
+                <span className="absolute text-3xl font-light">{healthScore || '--'}</span>
+              </div>
+              <div className="space-y-1">
+                <p className={`text-lg font-medium ${healthScore && healthScore > 70 ? 'text-accent-green' : 'text-orange-400'}`}>
+                  {healthScore ? (healthScore > 80 ? 'Optimal Condition' : healthScore > 60 ? 'Stable Growth' : 'Attention Required') : 'Analysis Pending'}
+                </p>
+                <p className="text-xs text-text-dim leading-relaxed max-w-[200px]">
+                  Visual assessment of morphology, color balance, and leaf texture.
+                </p>
               </div>
             </div>
           </div>
