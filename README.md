@@ -1,220 +1,193 @@
-# 🌿 AI Plant Review
+# 🌿 AI Plant Review + Moisture
 
-A real-time plant monitoring dashboard powered by Gemini AI and Raspberry Pi. This project uses a Raspberry Pi to capture photos of your plants, uploads them to Firebase, and uses Gemini AI to analyze plant health, pests, and growth.
+A real-time plant monitoring dashboard powered by Gemini AI, Raspberry Pi, and soil moisture sensors. This project captures photos and soil moisture data, uploads them to Firebase, and uses Gemini AI to analyze overall plant health.
 
-## 🚀 Getting Started
+## 🚀 Features
 
-Follow these steps to set up your own plant monitoring station.
+- **Visual Health Analysis**: Gemini AI assesses leaf color, texture, and morphology.
+- **Moisture Monitoring**: Integrates capacitive soil moisture sensors (ADS1115) for real-time hydration tracking.
+- **Uplink History**: View snapshots and telemetry data over time.
+- **Automated Alerts**: Visual indicators for "Critical: Dry" or "Optimal" states.
 
-### 1. Fork the Repository
-- Click the **Fork** button at the top right of this page to create your own copy of the project.
-- Clone your forked repository to your local machine.
-
-### 2. Set Up Firebase
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
-2. **Firestore Database**: Create a database in "Production Mode" and choose a location.
-3. **Security Rules**: 
-   - Copy the content of `firestore.rules` from this repo and paste it into the "Rules" tab of your Firestore database in the Firebase console.
-   - **CRITICAL**: In the rules you just pasted, find the line `allow create: if request.resource.data.secret == "<YOUR_UPLOAD_SECRET>"` and replace `"<YOUR_UPLOAD_SECRET>"` with your actual secret password. This MUST match the `UPLOAD_SECRET` you use later.
-4. **Project Settings**:
-   - Go to Project Settings (gear icon).
-   - Under "General", scroll down to "Your apps" and click the `</>` icon to add a Web App.
-   - Register the app (you don't need Firebase Hosting for now).
-   - Copy the `firebaseConfig` object values. You will need these for Vercel.
-
-### 3. Get a Gemini API Key
-- Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and generate a free API Key.
-
-### 4. Publishing to Vercel
-To publish your dashboard to a custom URL:
-1. Go to [Vercel](https://vercel.com/) and sign in with your GitHub account.
-2. Click **Add New** -> **Project**.
-3. Import your forked repository.
-4. **Environment Variables**: Add the following variables in the "Environment Variables" section:
-   - `GEMINI_API_KEY`: Your Gemini API Key.
-   - `UPLOAD_SECRET`: A custom password (e.g., `MySecret123`) for your Raspberry Pi to verify uploads.
-   - `VITE_FIREBASE_API_KEY`: From your Firebase config.
-   - `VITE_FIREBASE_PROJECT_ID`: From your Firebase config.
-   - `VITE_FIREBASE_APP_ID`: From your Firebase config.
-   - `VITE_FIREBASE_DATABASE_ID`: (Optional) Your Firestore Database ID (usually `(default)`).
-   - `VITE_FIREBASE_AUTH_DOMAIN`: From your Firebase config.
-   - `VITE_FIREBASE_STORAGE_BUCKET`: From your Firebase config.
-   - `VITE_FIREBASE_MESSAGING_SENDER_ID`: From your Firebase config.
-5. Click **Deploy**. Vercel will build and host your application.
-
-### 5. Custom Domain (Optional)
-1. In your Vercel project dashboard, go to **Settings** -> **Domains**.
-2. Enter your domain name and click **Add**.
-3. Follow the DNS instructions provided by Vercel to link your domain.
-
----
-
-## 🛠 Raspberry Pi Setup
+## 🛠 Raspberry Pi & Sensor Setup
 
 ### 1. Required Packages
-Ensure your Raspberry Pi is up to date and has the necessary tools installed. We use `libcamera` for official Pi Cameras or `fswebcam` for USB webcams.
+Ensure your Raspberry Pi has the necessary tools installed. For the moisture sensor, we use the `adafruit-ads1x15` library.
 
 ```bash
 sudo apt-get update
-sudo apt-get install curl coreutils fswebcam python3
+sudo apt-get install curl coreutils fswebcam python3 python3-pip
+pip3 install requests adafruit-circuitpython-ads1x15
 ```
 
-### 2. Directory Structure
-Ensure the storage directory exists where photos will be saved:
-```bash
-mkdir -p ~/PlantPhotos
+### 2. Hardware Wiring (Raspberry Pi 5)
+
+To maintain signal integrity and protect your Pi 5, we will use 3.3V logic for the entire circuit.
+
+#### 1. Raspberry Pi 5 to ADS1115 (I2C Interface)
+Connect the ADC module to the Pi's 40-pin header using the standard I2C pins.
+
+| ADS1115 Pin | Raspberry Pi 5 Pin | Function |
+|-------------|--------------------|----------|
+| VDD         | Pin 1 (3.3V)       | Power supply (Logic-level matched) |
+| GND         | Pin 6 (GND)        | Common ground |
+| SCL         | Pin 5 (GPIO 3)     | I2C Serial Clock |
+| SDA         | Pin 3 (GPIO 2)     | I2C Serial Data |
+| ADDR        | Pin 9 (GND)        | Sets I2C Address to 0x48 |
+
+#### 2. ADS1115 to Capacitive Moisture Sensor
+The capacitive sensor typically has three pins: VCC, GND, and AOUT (Analog Output).
+
+| Sensor Pin | Connection Point | Notes |
+|------------|------------------|-------|
+| VCC        | Pi Pin 17 (3.3V) | Keeps analog output within 0-3.3V range. |
+| GND        | Pi Pin 14 (GND)  | Shared ground with ADC and Pi. |
+| AOUT       | ADS1115 A0       | Connect to the first ADC channel. |
+
+### 3. Testing & Calibration
+
+Before scheduling the automated script, use this script to test your sensor and find your `V_DRY` and `V_WET` values for calibration.
+
+1. Create the test script: `nano ~/PlantPhotos/test_sensor.py`
+2. Paste the following:
+
+```python
+import time
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+
+# Initialize I2C
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# Initialize ADC
+ads = ADS.ADS1115(i2c)
+ads.gain = 1
+
+# Using '0' directly instead of 'ADS.P0' bypasses the attribute error.
+# Channel indices: 0 = A0, 1 = A1, 2 = A2, 3 = A3
+chan = AnalogIn(ads, 0)
+
+print("--- Starting Real-Time Moisture Monitor (V3.13 Fix) ---")
+print("Press Ctrl+C to stop.")
+print("{:>10}\t{:>10}".format("Raw Value", "Voltage"))
+
+try:
+    while True:
+        # Read the raw value and voltage
+        raw_val = chan.value
+        volts = chan.voltage
+        
+        print("{:>10}\t{:>10.3f}V".format(raw_val, volts))
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    print("\nMonitor stopped.")
+except Exception as e:
+    print(f"\nHardware Error: {e}")
 ```
+
+3. **Calibrate**: Note the voltage when the sensor is in open air (`V_DRY`) and when fully submerged in water up to the safe line (`V_WET`). Update these values in your `upload.py` script.
 
 ---
 
-## 📸 Camera Script Setup (`takephoto.py`)
+## 📸 Automated Upload Script (`upload.py`)
 
-Create the Python script on your Raspberry Pi to handle the photo capture.
+This script handles both the moisture reading and the image upload. It calculates a moisture percentage based on voltage calibration.
 
-1. Create the file:
-   ```bash
-   nano ~/PlantPhotos/takephoto.py
-   ```
-2. Paste the following code:
-   ```python
-   import os
-   import subprocess
-   import datetime
+1. Create the file: `nano ~/PlantPhotos/upload.py`
+2. Paste the script below (**Replace the placeholders** with your Firebase values):
 
-   def capture_image():
-       """
-       Captures a single photo from the connected webcam using fswebcam.
-       Generates a filename based on the current system time.
-       Saves the image to ~/PlantPhotos/.
-       """
-       # Target directory for photos
-       target_dir = os.path.expanduser("~/PlantPhotos/")
-       
-       # Ensure the directory exists
-       if not os.path.exists(target_dir):
-           try:
-               os.makedirs(target_dir)
-               print(f"Created directory: {target_dir}")
-           except Exception as e:
-               print(f"Failed to create directory {target_dir}: {e}")
-               return None
+```python
+import base64
+import requests
+import os
+import time
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
 
-       # Generate timestamp in yyyy-mm-dd-hh-mm format
-       timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
-       filename = f"{timestamp}.jpg"
-       
-       # Define the full path
-       filepath = os.path.join(target_dir, filename)
+# --- CONFIGURATION ---
+# Find these in Firebase Console -> Project Settings -> General
+API_KEY = "<YOUR_FIREBASE_API_KEY>"
+PROJECT_ID = "<YOUR_PROJECT_ID>" 
+# DB_ID is usually "(default)"
+DB_ID = "(default)"
+# SECRET must match the UPLOAD_SECRET in your dashboard settings
+SECRET = "<YOUR_UPLOAD_SECRET>"
+IMAGE_DIR = os.path.expanduser("~/PlantPhotos")
 
-       print(f"Attempting to capture: {filename}")
+# --- CALIBRATION CONSTANTS ---
+# Tune these based on your specific sensor (measure voltage in air vs water)
+V_DRY = 2.8 
+V_WET = 1.8
 
-       try:
-           # Tuning parameters for fswebcam:
-           # -r: resolution (800x800)
-           # --no-banner: removes the timestamp text overlay
-           # -S 20: Skips first 20 frames to allow auto-exposure to stabilize
-           # --set brightness=20%: Darkens the image to fix overexposure
-           # --set contrast=60%: Increases contrast for better AI analysis
-           
-           subprocess.run([
-               "fswebcam", 
-               "-r", "800x800", 
-               "--no-banner",
-               "-S", "20",
-               "--set", "brightness=20%",
-               "--set", "contrast=60%",
-               filepath
-           ], check=True)
-           
-           print(f"Success! Photo saved at: {filepath}")
-           return filepath
+def get_moisture_data():
+    """Reads the ADS1115 and returns calculated percentage."""
+    try:
+        i2c = busio.I2C(board.SCL, board.SDA)
+        ads = ADS.ADS1115(i2c)
+        ads.gain = 1
+        chan = AnalogIn(ads, 0) # P0
 
-       except subprocess.CalledProcessError as e:
-           print(f"Error: Failed to capture image. Check webcam connection.")
-           print(f"Technical details: {e}")
-           return None
-       except Exception as e:
-           print(f"An unexpected error occurred: {e}")
-           return None
+        voltage = chan.voltage
+        # Linear mapping formula
+        percentage = ((V_DRY - voltage) / (V_DRY - V_WET)) * 100
+        final_percent = max(0, min(100, round(percentage, 1)))
 
-   if __name__ == "__main__":
-       capture_image()
-   ```
+        return final_percent, round(voltage, 3)
+    except Exception as e:
+        print(f"Hardware Error: {e}")
+        return 0.0, 0.0
 
----
+def get_latest_image():
+    files = [os.path.join(IMAGE_DIR, f) for f in os.listdir(IMAGE_DIR) if f.endswith('.jpg')]
+    return max(files, key=os.path.getctime) if files else None
 
-## 📋 Crontab Configuration
+# 1. Gather Data
+moisture_val, voltage_val = get_moisture_data()
+latest = get_latest_image()
 
-To install these tasks, run `crontab -e` on your Raspberry Pi and paste the following lines at the bottom of the file.
+if not latest:
+    print("No photos found.")
+    exit()
 
-### 1. Automated Photo Capture
-Takes a photo every 30 minutes from 7 am to 7 pm daily.
-```bash
-*/30 7-18 * * * /usr/bin/python3 ~/PlantPhotos/takephoto.py
+with open(latest, "rb") as img_file:
+    b64_string = base64.b64encode(img_file.read()).decode('utf-8')
+
+# 2. Upload to Firestore
+url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/{DB_ID}/documents/snapshots?key={API_KEY}"
+payload = {
+    "fields": {
+        "image": {"stringValue": b64_string},
+        "timestamp": {"integerValue": str(int(time.time() * 1000))},
+        "secret": {"stringValue": SECRET},
+        "moisture": {"doubleValue": moisture_val},
+        "voltage": {"doubleValue": voltage_val}
+    }
+}
+
+response = requests.post(url, json=payload)
+if response.status_code == 200:
+    print(f"✅ Uploaded: {os.path.basename(latest)} | Moisture: {moisture_val}%")
+else:
+    print(f"❌ Error {response.status_code}: {response.text}")
 ```
 
-### 2. Automatic AI Upload (Firebase Direct)
-Sends the most recent photo directly to your Firestore database.
+## 📋 Scheduling (Crontab)
 
-1. Create `upload.py`:
-   ```bash
-   nano ~/PlantPhotos/upload.py
-   ```
-2. Paste the script below (Replace the placeholders with values from your Firebase Project Settings):
-   ```python
-   import base64
-   import requests
-   import os
-   import time
+Run `crontab -e` and add these tasks:
 
-   # --- CONFIGURATION (DO NOT SHARE PUBLICLY) ---
-   # Find these in Firebase Console -> Project Settings -> General
-   API_KEY = "<YOUR_WEB_API_KEY>"
-   PROJECT_ID = "<YOUR_PROJECT_ID>" 
-   # DB_ID is usually "(default)" unless you created a named database
-   DB_ID = "(default)"
-   # SECRET must match the UPLOAD_SECRET in your Vercel/AI Studio settings
-   SECRET = "<YOUR_UPLOAD_SECRET>"
-   IMAGE_DIR = os.path.expanduser("~/PlantPhotos")
-   # ---------------------
-
-   def get_latest_image():
-       files = [os.path.join(IMAGE_DIR, f) for f in os.listdir(IMAGE_DIR) if f.endswith('.jpg')]
-       return max(files, key=os.path.getctime) if files else None
-
-   latest = get_latest_image()
-   if not latest:
-       print("No photos found.")
-       exit()
-
-   with open(latest, "rb") as img_file:
-       b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-
-   url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/{DB_ID}/documents/snapshots?key={API_KEY}"
-   payload = {
-       "fields": {
-           "image": {"stringValue": b64_string},
-           "timestamp": {"integerValue": str(int(time.time() * 1000))},
-           "secret": {"stringValue": SECRET}
-       }
-   }
-
-   response = requests.post(url, json=payload)
-   if response.status_code == 200:
-       print(f" Uploaded: {os.path.basename(latest)}")
-   else:
-       print(f" Error {response.status_code}: {response.text}")
-   ```
-
-3. Add to Crontab:
 ```bash
-# From 7 am to 7 pm daily, upload every 2 hours at 7:02 am, 9:02 am, etc until 19:02. This allows for the most recent photo to be uploaded 2 minutes after it is taken.
+# Capture photo every 30 mins
+*/30 7-19 * * * /usr/bin/python3 ~/PlantPhotos/takephoto.py
+
+# Upload photo + moisture every 2 hours
 2 7,9,11,13,15,17,19 * * * /usr/bin/python3 ~/PlantPhotos/upload.py
-```
 
-### 3. Storage Maintenance (Cleanup)
-Automatically deletes photos older than 2 days.
-```bash
+# Cleanup photos older than 2 days
 0 0 * * * find ~/PlantPhotos/ -name "*.jpg" -type f -mtime +2 -delete
 ```
 
