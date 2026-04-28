@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "PlantSnapshot": {
+      "title": "Plant Snapshot",
+      "description": "A recorded plant snapshot with AI analysis data.",
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Base64 encoded image string"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Unix timestamp of receipt"
+        },
+        "score": {
+          "type": "number",
+          "description": "AI vitality score (0-100)"
+        },
+        "analysis": {
+          "type": "string",
+          "description": "AI botanical analysis markdown"
+        },
+        "moisture": {
+          "type": "number",
+          "description": "Capacitive moisture sensor percentage (0-100)"
+        }
+      },
+      "required": ["image", "timestamp"]
+    }
+  },
+  "firestore": {
+    "snapshots": {
+      "schema": "PlantSnapshot",
+      "description": "Historical collection of plant snapshots"
+    }
+  }
+}

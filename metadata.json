@@ -1,0 +1,8 @@
+{
+  "name": "AI Plant Review + Moisture",
+  "description": "Real-time AI-powered plant health monitoring dashboard receiving remote snapshots. I have added a capactive moisture sensor and a moisture percent is uploaded to Firestore. ",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
