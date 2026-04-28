@@ -44,6 +44,8 @@ The capacitive sensor typically has three pins: VCC, GND, and AOUT (Analog Outpu
 | GND        | Pi Pin 14 (GND)  | Shared ground with ADC and Pi. |
 | AOUT       | ADS1115 A0       | Connect to the first ADC channel. |
 
+![Wiring Diagram](https://raw.githubusercontent.com/carolinedunn/AI-Plant-Review-with-Moisture-Sensor/0b2c8188101a97f356bd06560665bf2a61b45bd0/plant-moisture-sensor-ADS1115_bb.png)
+
 ### 3. Testing & Calibration
 
 Before scheduling the automated script, use this script to test your sensor and find your `V_DRY` and `V_WET` values for calibration.
