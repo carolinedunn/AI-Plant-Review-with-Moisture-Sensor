@@ -461,6 +461,14 @@ export default function App() {
                   className="w-full h-full object-cover transition-transform group-hover:scale-110" 
                   alt={`History ${idx}`}
                 />
+                
+                {/* Moisture Badge */}
+                {item.moisture !== undefined && item.moisture !== null && (
+                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-mono text-accent-green border border-white/10 z-10 shadow-lg">
+                    {Math.round(item.moisture)}%
+                  </div>
+                )}
+                
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors" />
               </div>
               <p className="text-[10px] font-mono text-white/40 group-hover:text-accent-green transition-colors">
