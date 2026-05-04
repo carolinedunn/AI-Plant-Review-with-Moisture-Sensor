@@ -2,6 +2,14 @@
 
 A real-time plant monitoring dashboard powered by Gemini AI, Raspberry Pi, and soil moisture sensors. This project captures photos and soil moisture data, uploads them to Firebase, and uses Gemini AI to analyze overall plant health.
 
+## 📋 Prerequisites
+
+Before starting this setup, you **MUST** first complete the basic plant monitoring setup (Firebase, API keys, and camera script) from the main repository:
+
+**[GitHub: carolinedunn/AI-Plant-Review](https://github.com/carolinedunn/AI-Plant-Review)**
+
+Once your basic photo-uploading dashboard is working, return here to add the moisture sensor hardware and telemetry logic.
+
 ## 🚀 Features
 
 - **Visual Health Analysis**: Gemini AI assesses leaf color, texture, and morphology.
