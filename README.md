@@ -100,6 +100,38 @@ except Exception as e:
 
 3. **Calibrate**: Note the voltage when the sensor is in open air (`V_DRY`) and when fully submerged in water up to the safe line (`V_WET`). Update these values in your `upload.py` script.
 
+## 🔍 Troubleshooting
+
+If the sensor is not providing data or you see errors, check your I2C configuration:
+
+### 1. Enable I2C
+Make sure I2C is enabled on your Raspberry Pi:
+1. Run `sudo raspi-config`
+2. Select **Interface Options** -> **I2C**
+3. Select **Yes** to enable it.
+4. Finish and reboot if prompted.
+
+### 2. Physical Connection Check
+Use `i2c-tools` to verify that the Raspberry Pi sees the ADS1115:
+1. Install the tools: `sudo apt install i2c-tools`
+2. Check the bus: `sudo i2cdetect -y 1` (or `sudo i2cdetect -y 0` for some older Pi models)
+
+**Expected Output:**
+You should see a table where `48` appears. This is the default I2C address of the ADS1115.
+```text
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:                         -- -- -- -- -- -- -- -- 
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- -- 
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+70: -- -- -- -- -- -- -- --                         
+```
+
+If you see `--` everywhere, double-check your **SDA/SCL** and **VDD/GND** wiring.
+
 ---
 
 ## 📸 Automated Upload Script (`upload.py`)
