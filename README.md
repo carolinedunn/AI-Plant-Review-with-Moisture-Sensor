@@ -23,9 +23,9 @@ Once your basic photo-uploading dashboard is working, return here to add the moi
 Ensure your Raspberry Pi has the necessary tools installed. For the moisture sensor, we use the `adafruit-ads1x15` library.
 
 ```bash
-sudo apt-get update
-sudo apt-get install curl coreutils fswebcam python3 python3-pip
-pip3 install requests adafruit-circuitpython-ads1x15
+sudo apt update
+sudo apt install curl coreutils fswebcam python3 python3-pip
+sudo apt install requests adafruit-circuitpython-ads1x15
 ```
 
 ### 2. Hardware Wiring (Raspberry Pi 5)
