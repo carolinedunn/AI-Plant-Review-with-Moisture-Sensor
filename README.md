@@ -25,7 +25,7 @@ Ensure your Raspberry Pi has the necessary tools installed. For the moisture sen
 ```bash
 sudo apt update
 sudo apt install curl coreutils fswebcam python3 python3-pip
-sudo apt install requests adafruit-circuitpython-ads1x15
+pip install adafruit-circuitpython-ads1x15 --break-system-packages
 ```
 
 ### 2. Hardware Wiring (Raspberry Pi 5)
