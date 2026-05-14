@@ -2,6 +2,13 @@
 
 A real-time plant monitoring dashboard powered by Gemini AI, Raspberry Pi, and soil moisture sensors. This project captures photos and soil moisture data, uploads them to Firebase, and uses Gemini AI to analyze overall plant health.
 
+<a href="https://youtu.be/yxy1AmOGVfw">
+  <img src="ep2-thumbnail-play.jpg" width="720" alt="EP2">
+</a>
+
+[DIY Remote Plant Monitor Part 2: Add a Soil Moisture Sensor](https://youtu.be/yxy1AmOGVfw)
+
+
 ## 📋 Prerequisites
 
 Before starting this setup, you **MUST** first complete the basic plant monitoring setup (Firebase, API keys, and camera script) from the main repository:
