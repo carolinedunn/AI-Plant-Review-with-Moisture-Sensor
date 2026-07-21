@@ -35,9 +35,9 @@ sudo apt install curl coreutils fswebcam python3 python3-pip
 pip install adafruit-circuitpython-ads1x15 --break-system-packages
 ```
 
-### 2. Hardware Wiring (Raspberry Pi 5)
+### 2. Hardware Wiring
 
-To maintain signal integrity and protect your Pi 5, we will use 3.3V logic for the entire circuit.
+To maintain signal integrity and protect your Pi, we will use 3.3V logic for the entire circuit.
 
 #### 1. Raspberry Pi 5 to ADS1115 (I2C Interface)
 Connect the ADC module to the Pi's 40-pin header using the standard I2C pins.
@@ -59,7 +59,7 @@ The capacitive sensor typically has three pins: VCC, GND, and AOUT (Analog Outpu
 | GND        | Pi Pin 14 (GND)  | Shared ground with ADC and Pi. |
 | AOUT       | ADS1115 A0       | Connect to the first ADC channel. |
 
-![Wiring Diagram](https://raw.githubusercontent.com/carolinedunn/AI-Plant-Review-with-Moisture-Sensor/0b2c8188101a97f356bd06560665bf2a61b45bd0/plant-moisture-sensor-ADS1115_bb.png)
+![Wiring Diagram](/plant-moisture-sensor-v2.png)
 
 ### 3. Testing & Calibration
 
